@@ -1,6 +1,7 @@
 package com.example.recipeapp
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -20,45 +21,43 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import androidx.compose.runtime.getValue
+import java.time.format.TextStyle
 
+sealed class Screen(val route: String) {
+    object RecipeScreen : Screen("recipescreen")
+    object DetailScreen : Screen("detailscreen")
+}
 
 @Composable
-fun RecipeScreen(modifier: Modifier = Modifier) {
-    val recipeViewModel: MainViewModel = viewModel()
-    val viewState by recipeViewModel.categoriesState
-    
+fun RecipeScreen(
+    viewState: RecipeState,
+    navigateToDetail: (Category) -> Unit
+) {
     Box(modifier = Modifier.fillMaxSize()) {
         when {
-            viewState.loading -> {
-                CircularProgressIndicator(modifier.align(Alignment.Center))
-            }
-
-            viewState.error != null -> {
-                Text("Error")
-            }
-
-            else -> {
-                CategoryScreen(categories = viewState.list)
-            }
+            viewState.loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            viewState.error != null -> Text("Error")
+            else -> CategoryScreen(categories = viewState.list, navigateToDetail = navigateToDetail)
         }
     }
 }
 
 @Composable
-fun CategoryScreen(categories: List<Category>) {
+fun CategoryScreen(categories: List<Category>, navigateToDetail: (Category) -> Unit) {
     LazyVerticalGrid(GridCells.Fixed(1), modifier = Modifier.fillMaxSize()) {
-        items(categories) {category ->
-            CategoryItem(category)
+        items(categories) { category ->
+            CategoryItem(category = category, onClick = { navigateToDetail(category) })
         }
     }
 }
 
 @Composable
-fun CategoryItem(category: Category) {
+fun CategoryItem(category: Category, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .padding(8.dp)
-            .fillMaxSize(),
+            .fillMaxSize()
+            .clickable { onClick() },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
